@@ -18,7 +18,10 @@ def random_size():
     return random.randint(1, MAX_DIE_SIZE+1)
 
 def faces_from_size(x_size=MAX_DIE_SIZE):
-    return range(1, x_size+1)
+    if six.PY3:
+        return list(range(1, x_size+1))
+    else:
+        return range(1, x_size+1)
 
 def random_faces(x_size=MAX_DIE_SIZE):
     return faces_from_size(random.randint(2, x_size+1))
