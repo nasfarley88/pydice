@@ -1,7 +1,16 @@
 import json, operator, re
 from random import choice
 
+import six
+if six.PY3:
+    from functools import cmp_to_key
+
 ROLL_STRING_PATTERN = '(?P<n_dice>\d+)d(?P<x_size>\d+)(?P<keep>[\^v]{1}\d+)?(?P<mod>[+-]{1}\d+)?'
+
+
+# for python 3 compatibility
+def cmp(a, b):
+    return (a > b) - (a < b)
 
 
 class Die(object):
@@ -139,7 +148,10 @@ class Roll(object):
     @property
     def faces(self):
         f = lambda x, y: cmp(x.result, y.result)
-        return [d.result for d in sorted(self.dice, cmp=f)]
+        if six.PY3:
+            return [d.result for d in sorted(self.dice, key=cmp_to_key(f))]
+        else:
+            return [d.result for d in sorted(self.dice, cmp=f)]
     
     @property
     def total(self):
@@ -158,7 +170,7 @@ class Roll(object):
 
 
 def ndx(n_dice, x_size):
-    return [DN(x_size) for n in xrange(n_dice)]
+    return [DN(x_size) for n in range(n_dice)]
 
 
 def roll_ndx(n_dice, x_size=6, total_mod=0, plus_half=False):
