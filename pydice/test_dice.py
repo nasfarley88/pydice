@@ -1,5 +1,9 @@
 import unittest, random
-import dice
+import six
+if six.PY2:
+    import dice
+else:
+    from .import dice
 
 # all hail stochastic testing
 CASE_ITERATIONS = 10000
@@ -31,7 +35,7 @@ class DieResultInFaces(unittest.TestCase):
     """
     
     def test(self):
-        for x in xrange(CASE_ITERATIONS):
+        for x in range(CASE_ITERATIONS):
             f = random_faces()
             d = dice.Die(faces=f)
             d.roll()
@@ -44,7 +48,7 @@ class CheckRollNDX(unittest.TestCase):
     dice.
     """    
     def test(self):
-        for x in xrange(CASE_ITERATIONS):
+        for x in range(CASE_ITERATIONS):
             n_dice = random_ndice()
             x_size = random_size()
             faces = faces_from_size(x_size)
@@ -81,7 +85,7 @@ class NDXRollString(unittest.TestCase):
     
     # testing ndx
     def test(self):
-        for x in xrange(CASE_ITERATIONS):
+        for x in range(CASE_ITERATIONS):
             n_dice = random_ndice()
             x_size = random_size()
             faces = faces_from_size(x_size)
@@ -118,7 +122,7 @@ class NDXwmodRollString(unittest.TestCase):
     pattern = '{n}d{x}{plusminus}{mod}'
     # testing ndx
     def test(self):
-        for x in xrange(CASE_ITERATIONS):
+        for x in range(CASE_ITERATIONS):
             n_dice = random_ndice()
             x_size = random_size()
             mod = random_size()
