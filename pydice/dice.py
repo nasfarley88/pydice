@@ -274,6 +274,10 @@ def roll(string='1d6'):
         '6d6^3': roll six six-sided dice and keep the 3 highest values
 
     """
+
+    # Ignore whitespace
+    string = re.sub(r'\s+', '', string)
+
     dice_matches = DICE_PATTERN.findall(string)
     edited_string = DICE_PATTERN.sub("X", string)
     modifier_matches = MODIFIER_PATTERN.findall(edited_string)
