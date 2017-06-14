@@ -5,7 +5,12 @@ import six
 if six.PY3:
     from functools import cmp_to_key
 
-ROLL_STRING_PATTERN = '(?P<n_dice>\d+)d(?P<x_size>\d+)(?P<keep>[\^v]{1}\d+)?(?P<mod>[+-]{1}\d+)?'
+# ROLL_STRING_PATTERN = '(?P<n_dice>\d+)d(?P<x_size>\d+)(?P<keep>[\^v]{1}\d+)?(?P<mod>[+-]{1}\d+)?'
+ROLL_STRING_PATTERN = re.compile('(?P<n_dice>\d+)d(?P<x_size>\d+)(?P<keep>[\^v]{1}\d+)?(?P<mod>[+-]{1}\d+)?')
+
+DICE_PATTERN = re.compile(r'[+-]?\d+d\d+[v^]?\d*')
+DICE_PARTS_PATTERN = re.compile('(?P<n_dice>\d+)d(?P<x_size>\d+)(?P<keep>[\^v]{1}\d+)?(?P<mod>[+-]{1}\d+)?')
+MODIFIER_PATTERN = re.compile(r'[+-]\d+')
 
 
 # for python 3 compatibility
@@ -184,10 +189,9 @@ def roll_ndx(n_dice, x_size=6, total_mod=0, plus_half=False):
     return Roll(dice, total_mod=total_mod)
 
 
-def roll(string='1d6'):
+def parse_dice_group(string):
     """
-    Takes a string description of a roll and returns a fully-loaded Roll
-    object.
+    Takes a string description of a roll and returns list of Dice.
 
     Examples
         '1d6': roll a single six-sided die
@@ -196,10 +200,14 @@ def roll(string='1d6'):
         '6d6^3': roll six six-sided dice and keep the 3 highest values
 
     """
-    m = re.match(ROLL_STRING_PATTERN, string)
-    if not m:
-        raise Exception("Error parsing roll from string '{0}'".format(string))
 
+    # TODO make this function neater (or at least better commented).
+    if '+' in string:
+        string = string.replace('+', '')
+    elif '-' in string:
+        raise NotImplementedError("Sorry, negative dice are not (yet!) supported")
+
+    m = ROLL_STRING_PATTERN.match(string)
     d = m.groupdict()
     n_dice = int(d['n_dice'])
     x_size = int(d['x_size'])
@@ -225,8 +233,57 @@ def roll(string='1d6'):
             # keep the bottom rolls
             f = lambda x, y: cmp(x.result, y.result)
 
-        s = sorted(r.dice, cmp=f)
+        if six.PY3:
+            s = sorted(r.dice, key=cmp_to_key(f))
+        else:
+            s = sorted(r.dice, cmp=f)
         r._dropped_dice.extend(i for i in s[keep_n:])
         r.throw.dice = s[:keep_n]
 
+    return r.dice
+
+
+def add_modifiers(iter_of_modifiers):
+    """
+    Adds an iterable of string modifiers.
+
+    E.g. ['+2', '-3'] -> -1
+
+    """
+    total = 0
+    for m in iter_of_modifiers:
+        if m[0] == '+':
+            total += int(m[1:])
+        elif m[0] == '-':
+            total -= int(m[1:])
+        else:
+            raise SyntaxError("Not sure what is meant by '{}'".format(m))
+
+    return total
+
+
+def roll(string='1d6'):
+    """
+    Takes a string description of a roll and returns a fully-loaded Roll
+    object.
+
+    Examples
+        '1d6': roll a single six-sided die
+        '3d6': roll three six-sided dice
+        '3d6+1': roll three six-sided dice and add 1 to the total result
+        '6d6^3': roll six six-sided dice and keep the 3 highest values
+
+    """
+    dice_matches = DICE_PATTERN.findall(string)
+    edited_string = DICE_PATTERN.sub("X", string)
+    modifier_matches = MODIFIER_PATTERN.findall(edited_string)
+    if not dice_matches and not modifier_matches:
+        raise Exception("Error parsing roll from string '{0}'".format(string))
+
+    dice = []
+    for d in dice_matches:
+        dice += parse_dice_group(d)
+
+    total_mod = add_modifiers(modifier_matches)
+    r = Roll(dice, total_mod=total_mod)
     return r
