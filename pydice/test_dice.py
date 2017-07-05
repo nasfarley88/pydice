@@ -10,9 +10,8 @@ else:
 
 
 # all hail stochastic testing
-CASE_ITERATIONS = 10000
-MAX_DIE_SIZE = 20
-MAX_N_DICE = 20
+MAX_DIE_SIZE = 5000
+MAX_N_DICE = 50
 
 
 # helpers for randomization
@@ -47,8 +46,9 @@ class CheckRollNDX(unittest.TestCase):
     Verifies the roll_ndx() function generates a Roll with the appropriate
     dice.
     """
-    @given(n_dice=st.sampled_from(range(1, 20)), x_size=st.sampled_from(range(2, 10000)))
-    @settings(timeout=10)
+    @given(n_dice=st.integers(min_value=1, max_value=MAX_N_DICE),
+           x_size=st.integers(min_value=2, max_value=MAX_DIE_SIZE))
+    @settings(timeout=5)
     def test(self, n_dice, x_size):
         faces = faces_from_size(x_size)
 
@@ -83,12 +83,10 @@ class NDXRollString(unittest.TestCase):
     pattern = '{n}d{x}'
 
     # testing ndx
-    @given(n_dice=st.sampled_from(range(1, 20)), x_size=st.sampled_from(range(2, 10000)))
-    @settings(timeout=10)
+    @given(n_dice=st.integers(min_value=1, max_value=MAX_N_DICE),
+           x_size=st.integers(min_value=2, max_value=MAX_DIE_SIZE))
+    @settings(timeout=5)
     def test(self, n_dice, x_size):
-        # for x in range(CASE_ITERATIONS):
-        # n_dice = random_ndice()
-        # x_size = random_size()
         faces = faces_from_size(x_size)
 
         test_string = self.pattern.format(n=n_dice, x=x_size)
@@ -123,8 +121,10 @@ class NDXwmodRollString(unittest.TestCase):
     pattern = '{n}d{x}{plusminus}{mod}'
     # testing ndx
     # TODO create hypothesis strategy for making dice expressions
-    @given(n_dice=st.sampled_from(range(1, 20)), x_size=st.sampled_from(range(2, 10000)), mod=st.integers())
-    @settings(timeout=10)
+    @given(n_dice=st.integers(min_value=1, max_value=MAX_N_DICE),
+           x_size=st.integers(min_value=2, max_value=MAX_DIE_SIZE),
+           mod=st.integers())
+    @settings(timeout=5)
     def test(self, n_dice, x_size, mod):
         faces = faces_from_size(x_size)
 
