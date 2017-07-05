@@ -130,45 +130,43 @@ class NDXwmodRollString(unittest.TestCase):
     """
     pattern = '{n}d{x}{plusminus}{mod}'
     # testing ndx
-    def test(self):
-        for x in range(CASE_ITERATIONS):
-            n_dice = random_ndice()
-            x_size = random_size()
-            mod = random_size()
-            faces = faces_from_size(x_size)
+    # TODO create hypothesis strategy for making dice expressions
+    @given(n_dice=st.sampled_from(range(1, 20)), x_size=st.sampled_from(range(2, 10000)), mod=st.integers())
+    def test(self, n_dice, x_size, mod):
+        faces = faces_from_size(x_size)
 
-            if random.randint(1,2) == 1:
-                plusminus = '+'
-                mod_int = mod
-            else:
-                plusminus = '-'
-                mod_int = -1 * mod
+        if mod >= 0:
+            plusminus = "+"
+        else:
+            plusminus = ""
 
-            test_string = self.pattern.format(n=n_dice, x=x_size,
-                                              plusminus=plusminus,
-                                              mod=mod)
-            r = dice.roll(test_string)
+        test_string = self.pattern.format(n=n_dice,
+                                          x=x_size,
+                                          plusminus=plusminus,
+                                          mod=mod)
 
-            # number of Dice in Roll should be n_dice
-            self.assertTrue(len(r.dice) == n_dice)
+        r = dice.roll(test_string)
 
-            for d in r.dice:
-                # each Die in Roll should have a result in faces or faces*mod
-                faces_w_mod = set(faces) | set(f+mod for f in faces)
-                self.assertTrue(d.result in faces,
-                                'Parsed {s} contains {d} result {r} not in faces(+mod) {f}'\
-                                .format(s=test_string, d=d, r=d.result, f=faces_w_mod))
+        # number of Dice in Roll should be n_dice
+        self.assertTrue(len(r.dice) == n_dice)
 
-            # overall result should be between n_dice+mode and n_dice*x_size+mod
-            lower_limit = n_dice + mod_int
-            self.assertTrue(r.total >= lower_limit,
-                            'Parsed {s} yielded result {r} with total {t} less than {l}'\
-                            .format(s=test_string, r=r.result, t=r.total, l=lower_limit))
+        for d in r.dice:
+            # each Die in Roll should have a result in faces or faces*mod
+            faces_w_mod = set(faces) | set(f+mod for f in faces)
+            self.assertTrue(d.result in faces,
+                            'Parsed {s} contains {d} result {r} not in faces(+mod) {f}'\
+                            .format(s=test_string, d=d, r=d.result, f=faces_w_mod))
 
-            upper_limit = n_dice * x_size + mod_int
-            self.assertTrue(r.total <= upper_limit,
-                            'Parsed {s} yielded result {r} with total {t} greater than {l}'\
-                            .format(s=test_string, r=r.result, t=r.total, l=upper_limit))
+        # overall result should be between n_dice+mode and n_dice*x_size+mod
+        lower_limit = n_dice + mod
+        self.assertTrue(r.total >= lower_limit,
+                        'Parsed {s} yielded result {r} with total {t} less than {l}'\
+                        .format(s=test_string, r=r.result, t=r.total, l=lower_limit))
+
+        upper_limit = n_dice * x_size + mod
+        self.assertTrue(r.total <= upper_limit,
+                        'Parsed {s} yielded result {r} with total {t} greater than {l}'\
+                        .format(s=test_string, r=r.result, t=r.total, l=upper_limit))
 
 
 def main():
