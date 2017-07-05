@@ -1,7 +1,6 @@
 import unittest
 import six
 from hypothesis import given, settings, strategies as st
-import functools
 
 if six.PY2:
     import dice
@@ -15,7 +14,6 @@ MAX_N_DICE = 50
 
 
 # helpers for randomization
-@functools.lru_cache()
 def faces_from_size(x_size=MAX_DIE_SIZE):
     return range(1, x_size+1)
 
